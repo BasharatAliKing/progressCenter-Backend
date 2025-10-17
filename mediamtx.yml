@@ -1,0 +1,9 @@
+api: yes
+rtsp: yes
+rtmp: yes
+hls: yes
+webrtc: yes
+
+paths:
+  cam:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1761129402&id=898660681428127744&c=1be1517123&t=0e7a6b143a1403fc8e03d8aa08c2408b6a466f654bb3bf905a1526a82f50f2ac&ev=100
