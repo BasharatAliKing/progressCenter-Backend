@@ -15,15 +15,15 @@ app.use(cors());
 const PORT = process.env.PORT || 4000;
 
 // Launch MediaMTX automatically
-// const exe = process.platform === "win32" ? "mediamtx.exe" : "./mediamtx";
-// const configPath = path.join(__dirname, "../mediamtx.yml");
+const exe = process.platform === "win32" ? "mediamtx.exe" : "./mediamtx";
+const configPath = path.join(__dirname, "../mediamtx.yml");
 
-// console.log("🎬 Launching MediaMTX...");
-// const mediamtx = spawn(exe, [configPath], { cwd: path.join(__dirname, "../") });
+console.log("🎬 Launching MediaMTX...");
+const mediamtx = spawn(exe, [configPath], { cwd: path.join(__dirname, "../") });
 
-// mediamtx.stdout.on("data", (d) => console.log("MediaMTX:", d.toString().trim()));
-// mediamtx.stderr.on("data", (d) => console.error("MediaMTX err:", d.toString().trim()));
-// mediamtx.on("close", (code) => console.log("MediaMTX stopped:", code));
+mediamtx.stdout.on("data", (d) => console.log("MediaMTX:", d.toString().trim()));
+mediamtx.stderr.on("data", (d) => console.error("MediaMTX err:", d.toString().trim()));
+mediamtx.on("close", (code) => console.log("MediaMTX stopped:", code));
 
 app.get("/", (req, res) => res.send("✅ MediaMTX backend running"));
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
