@@ -17,22 +17,22 @@ webrtc: yes
 paths:
 # Neels Gumbad Camera 01
   # Example static path (can be removed if you use the API to add cameras)
-  "68f9de284940d8bc8dc74d1c":
+  "68fb21804dda076f1e2b55da":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1761314468&id=899436903331442688&c=1be1517123&t=251689b8583082d00ce595bd93bc0740ee505a6dbf9f05db823363cf558839dd&ev=100
     sourceOnDemand: yes
 # NSIT Camera 01
-  "68f9ea244940d8bc8dc74d39":
+  "68fb20c24dda076f1e2b55cc":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1761808768&id=901510149475889152&c=3b8a6091ab&t=127bda21510e72b0d7c16f0d76419cd0d480e29352e798634c62ce0685c35910&ev=100
     sourceOnDemand: yes
 # NSIT Camera 02
-  "68fafe3bec2ad04e765828c2":
+  "68fb20ad4dda076f1e2b55ca":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1761810323&id=901516672071471104&c=3b8a6091ab&t=8fad15a0ff8483260ac1b5559101774074f4d8acd1465bc26bf0bc7e683e53a5&ev=100
     sourceOnDemand: yes
 # NSIT Camera 03
-  "68fafeccec2ad04e765828c9":
+  "68fb20964dda076f1e2b55c8":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1761809885&id=901514832813916160&c=3b8a6091ab&t=50d466545a886c6567af37b2f08b4655a957a07d04d7d19c011556158e8564fb&ev=100
     sourceOnDemand: yes
 # NSIT Camera 04
-  "68faffa324c714ee7e10fb3a":
+  "68fb206a4dda076f1e2b55c6":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1761809614&id=901513695500255232&c=3b8a6091ab&t=abb55be70c48666c5ef99c8f107106dbd2444109e7f0ebfe7c37549638c581b9&ev=100
     sourceOnDemand: yes
