@@ -31,10 +31,47 @@ export const addCamera = async (req, res) => {
 // ✅ Get all cameras
 export const getCameras = async (req, res) => {
   try {
+    // 1️⃣ Fetch all cameras from MongoDB
     const cameras = await Camera.find();
-    res.status(200).json({ success: true, cameras });
+
+    // 2️⃣ For each camera, if it has an aqi_api_key, fetch AQI data
+    const camerasWithAQI = await Promise.all(
+      cameras.map(async (camera) => {
+        if (camera.aqi_api_key) {
+          try {
+            const response = await fetch(camera.aqi_api_key);
+            const aqiData = await response.json();
+
+            return {
+              ...camera.toObject(),
+              aqiData, // attach AQI data directly to this camera
+            };
+          } catch (err) {
+            console.error(`AQI fetch failed for ${camera.name}:`, err.message);
+            return {
+              ...camera.toObject(),
+              aqiData: null, // keep null if AQI API fails
+            };
+          }
+        } else {
+          return {
+            ...camera.toObject(),
+            aqiData: null,
+          };
+        }
+      })
+    );
+    // 3️⃣ Send combined result
+    res.status(200).json({
+      success: true,
+      cameras: camerasWithAQI,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Error fetching cameras:", error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
