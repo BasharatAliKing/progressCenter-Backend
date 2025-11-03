@@ -3,7 +3,7 @@ import axios from "axios";
 // ✅ Add new camera with image upload
 export const addCamera = async (req, res) => {
   try {
-    const { name, rtmpPath, status, coordinates, location, city, members } =
+    const { name, rtmpPath, status, coordinates, location, city, members ,aqi_api_key } =
       req.body;
     const image = req.file ? `/images/${req.file.filename}` : null;
     const newCamera = new Camera({
@@ -14,6 +14,7 @@ export const addCamera = async (req, res) => {
       location,
       city,
       image,
+      aqi_api_key,
       members: members ? JSON.parse(members) : [],
     });
 

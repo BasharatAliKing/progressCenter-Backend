@@ -12,6 +12,7 @@ const cameraSchema = new mongoose.Schema(
     location: { type: String },
     city: { type: String },
     image: { type: String }, // saved path: /images/xxxx.jpg
+    aqi_api_key: { type: String },
     // members: [
     //   {
     //     type: mongoose.Schema.Types.ObjectId,

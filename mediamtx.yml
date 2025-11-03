@@ -18,7 +18,7 @@ paths:
 # Neels Gumbad Camera 01
   # Example static path (can be removed if you use the API to add cameras)
   "68fb21804dda076f1e2b55da":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1761314468&id=899436903331442688&c=1be1517123&t=251689b8583082d00ce595bd93bc0740ee505a6dbf9f05db823363cf558839dd&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1762147794&id=902932125922983936&c=1be1517123&t=10146c7ea8d42055fe0829fa5d6f8b3cdd8be7e136025cb0247d0092771078b2&ev=100
     sourceOnDemand: yes
 # NSIT Camera 01
   "68fb20c24dda076f1e2b55cc":
