@@ -7,7 +7,6 @@
 # paths:
 #   cam:
 #      source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1761129402&id=898660681428127744&c=1be1517123&t=0e7a6b143a1403fc8e03d8aa08c2408b6a466f654bb3bf905a1526a82f50f2ac&ev=100
-     
 api: yes
 rtsp: yes
 rtmp: yes
@@ -18,21 +17,24 @@ paths:
 # Neels Gumbad Camera 01
   # Example static path (can be removed if you use the API to add cameras)
   "68fb21804dda076f1e2b55da":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1762147794&id=902932125922983936&c=1be1517123&t=10146c7ea8d42055fe0829fa5d6f8b3cdd8be7e136025cb0247d0092771078b2&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1762833629&id=905808726251143168&c=1be1517123&t=8fd8664757868ab8698796f8ddd3c10c949bd1a116c0f4bf12a79ce5e6651afa&ev=100
     sourceOnDemand: yes
 # NSIT Camera 01
-  "68fb20c24dda076f1e2b55cc":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1761808768&id=901510149475889152&c=3b8a6091ab&t=127bda21510e72b0d7c16f0d76419cd0d480e29352e798634c62ce0685c35910&ev=100
+  "690b14a7eabc8246cb8ff39e":
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1762920401&id=906172674024443904&c=3b8a6091ab&t=50fe5ea228698915bc400626cc4a189f75a736fb774a8a98179779385966cca7&ev=100
     sourceOnDemand: yes
 # NSIT Camera 02
-  "68fb20ad4dda076f1e2b55ca":
+  "68fafe3bec2ad04e765828c2":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1761810323&id=901516672071471104&c=3b8a6091ab&t=8fad15a0ff8483260ac1b5559101774074f4d8acd1465bc26bf0bc7e683e53a5&ev=100
     sourceOnDemand: yes
 # NSIT Camera 03
-  "68fb20964dda076f1e2b55c8":
+  "68fafeccec2ad04e765828c9":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1761809885&id=901514832813916160&c=3b8a6091ab&t=50d466545a886c6567af37b2f08b4655a957a07d04d7d19c011556158e8564fb&ev=100
     sourceOnDemand: yes
 # NSIT Camera 04
-  "68fb206a4dda076f1e2b55c6":
+  "68faffa324c714ee7e10fb3a":
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1761809614&id=901513695500255232&c=3b8a6091ab&t=abb55be70c48666c5ef99c8f107106dbd2444109e7f0ebfe7c37549638c581b9&ev=100
     sourceOnDemand: yes
+
+
+    

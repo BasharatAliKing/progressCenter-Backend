@@ -1,0 +1,747 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import DetailedSchedule from "../models/detailedScheduleModel.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+const getCurrentDate = () => {
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+};
+
+const formatDate = (xerDate) => {
+  if (!xerDate) return '';
+  try {
+    const date = new Date(xerDate);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = String(date.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+  } catch {
+    return '';
+  }
+};
+
+const calculateDuration = (startDate, endDate) => {
+  if (!startDate || !endDate) return 30;
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 30;
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 30;
+  } catch {
+    return 30;
+  }
+};
+
+// ========================================
+// XER File Parser - Converts .XER to JSON
+// ========================================
+
+/**
+ * Parse XER file and extract project data
+ * XER files are tab-delimited text files with specific table structures
+ */ 
+const parseXERFile = (filePath) => {
+  try {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContent.split('\n');
+    
+    console.log('Total lines in XER file:', lines.length);
+    console.log('First 10 lines:', lines.slice(0, 10));
+    
+    let currentTable = null;
+    let headers = [];
+    const tables = {};
+    let tableCount = 0;
+    let rowCount = 0;
+    
+    for (let line of lines) {
+      line = line.trim();
+      
+      // Skip empty lines
+      if (!line) continue;
+      
+      // Table start marker
+      if (line.startsWith('%T')) {
+        currentTable = line.substring(2).trim();
+        tables[currentTable] = [];
+        tableCount++;
+        console.log(`Found table: ${currentTable}`);
+        continue;
+      }
+      
+      // Headers
+      if (line.startsWith('%F')) {
+        headers = line.substring(2).split('\t');
+        console.log(`Headers for ${currentTable}:`, headers.slice(0, 5));
+        continue;
+      }
+      
+      // Data rows
+      if (line.startsWith('%R') && currentTable && headers.length > 0) {
+        const values = line.substring(2).split('\t');
+        const row = {};
+        
+        headers.forEach((header, index) => {
+          row[header] = values[index] || '';
+        });
+        
+        tables[currentTable].push(row);
+        rowCount++;
+      }
+    }
+    
+    console.log(`Parsed ${tableCount} tables with ${rowCount} total rows`);
+    console.log('Table summary:', Object.keys(tables).map(key => `${key}: ${tables[key].length} rows`));
+    
+    return tables;
+  } catch (error) {
+    throw new Error(`Error parsing XER file: ${error.message}`);
+  }
+};
+
+/**
+ * Convert XER tables to our DetailedSchedule format
+ */
+const convertXERToScheduleFormat = (xerTables) => {
+  try {
+    // Debug: Log all available tables
+    console.log('Available XER tables:', Object.keys(xerTables));
+    console.log('Table counts:', Object.keys(xerTables).map(key => `${key}: ${xerTables[key]?.length || 0}`));
+    
+    // Extract project information - Try multiple table names
+    const projects = xerTables.PROJECT || xerTables.PROJ || [];
+    const tasks = xerTables.TASK || xerTables.TASKS || [];
+    const wbs = xerTables.PROJWBS || [];
+    
+    console.log('Projects found:', projects.length);
+    console.log('Tasks found:', tasks.length);
+    console.log('WBS items found:', wbs.length);
+    
+    // Debug: Show sample data
+    if (wbs.length > 0) {
+      console.log('Sample WBS item:', JSON.stringify(wbs[0], null, 2));
+    }
+    if (tasks.length > 0) {
+      console.log('Sample Task item:', JSON.stringify(tasks[0], null, 2));
+    }
+    
+    if (projects.length === 0) {
+      // Try to get project info from any table that has project-like data
+      const allTableKeys = Object.keys(xerTables);
+      console.error('No PROJWBS or PROJECT table found. Available tables:', allTableKeys);
+      
+      // Look for alternative project tables
+      const projectTable = xerTables[allTableKeys.find(key => 
+        key.toLowerCase().includes('proj') || key.toLowerCase().includes('project')
+      )];
+      
+      if (projectTable && projectTable.length > 0) {
+        console.log('Found alternative project table:', projectTable);
+        projects.push(projectTable[0]);
+      } else {
+        throw new Error(`No project data found in XER file. Available tables: ${allTableKeys.join(', ')}`);
+      }
+    }
+    
+    const project = projects[0];
+    console.log('First project data:', JSON.stringify(project, null, 2));
+    
+    // Build WBS and Task hierarchy using proper structure
+    const wbsMap = new Map();
+    const taskMap = new Map();
+    
+    console.log('Building WBS structure...');
+    
+    // Step 1: Map all WBS items with their hierarchical structure
+    wbs.forEach(item => {
+      const wbsId = item.wbs_id || item.proj_id;
+      wbsMap.set(wbsId, {
+        id: wbsId,
+        name: item.wbs_name || item.proj_short_name || 'Unknown WBS',
+        parent_wbs_id: item.parent_wbs_id,
+        seq_num: parseInt(item.seq_num) || 0,
+        duration: 0,
+        start_date: '',
+        end_date: '',
+        subtasks: [],
+        tasks: []
+      });
+    });
+    
+    console.log(`Total WBS items: ${wbsMap.size}`);
+    
+    // If no WBS items, create tasks directly from TASK table
+    if (wbsMap.size === 0 && tasks.length > 0) {
+      console.log('No WBS structure found, using tasks directly...');
+      return buildTasksWithoutWBS(tasks, project);
+    }
+    
+    // Step 2: Map all tasks with their properties
+    console.log('Processing tasks. Sample task:', tasks[0]);
+    
+    tasks.forEach(task => {
+      const taskDuration = parseFloat(task.target_drtn_hr_cnt || task.remain_drtn_hr_cnt || task.orig_drtn_hr_cnt || 0) / 8;
+      const taskStartDate = formatDate(task.target_start_date || task.act_start_date || task.early_start_date);
+      const taskEndDate = formatDate(task.target_end_date || task.act_end_date || task.early_end_date);
+      
+      taskMap.set(task.task_id, {
+        id: task.task_id,
+        name: task.task_name || task.task_code || 'Unnamed Task',
+        duration: taskDuration > 0 ? Math.round(taskDuration) : 0,
+        start_date: taskStartDate || getCurrentDate(),
+        end_date: taskEndDate || getDatePlusDays(taskStartDate || getCurrentDate(), Math.max(taskDuration, 1)),
+        wbs_id: task.wbs_id,
+        task_type: task.task_type, // To identify if it's a summary task or activity
+        subtasks: []
+      });
+    });
+    
+    console.log(`Total tasks mapped: ${taskMap.size}`);
+    
+    // Check if we have no tasks, fall back to WBS-only structure
+    if (taskMap.size === 0 && wbsMap.size > 0) {
+      console.log('No tasks found, building from WBS only...');
+    }
+    
+    // Step 3: Attach tasks to their respective WBS elements
+    let tasksAttached = 0;
+    taskMap.forEach(task => {
+      const wbsItem = wbsMap.get(task.wbs_id);
+      if (wbsItem) {
+        wbsItem.tasks.push(task);
+        tasksAttached++;
+      } else {
+        console.log(`Warning: Task "${task.name}" has no matching WBS (wbs_id: ${task.wbs_id})`);
+      }
+    });
+    
+    console.log(`Tasks attached to WBS: ${tasksAttached}/${taskMap.size}`);
+    
+    // Step 4: Build WBS hierarchy (WBS items can have child WBS items)
+    const rootWBS = [];
+    
+    wbsMap.forEach(wbsItem => {
+      if (!wbsItem.parent_wbs_id || wbsItem.parent_wbs_id === wbsItem.id) {
+        // This is a root WBS item
+        buildWBSHierarchy(wbsItem, wbsMap);
+        rootWBS.push(wbsItem);
+      }
+    });
+    
+    console.log(`Root WBS items: ${rootWBS.length}`);
+    console.log('Root WBS names:', rootWBS.map(w => w.name));
+    
+    // Step 5: Convert WBS structure to task structure for our schema
+    const rootTasks = convertWBSToTasks(rootWBS);
+    
+    console.log(`Root tasks created: ${rootTasks.length}`);
+    console.log('Root task names:', rootTasks.map(t => t.name));
+    
+    // Calculate project dates and duration with fallbacks
+    const projectStartDate = findEarliestDate(rootTasks, 'start_date') || 
+                             formatDate(project.target_start_date) || 
+                             formatDate(project.act_start_date) || 
+                             getCurrentDate();
+    
+    const projectEndDate = findLatestDate(rootTasks, 'end_date') || 
+                          formatDate(project.target_end_date) || 
+                          formatDate(project.act_end_date) || 
+                          getDatePlusDays(projectStartDate, 30);
+    
+    const projectDuration = calculateDuration(projectStartDate, projectEndDate) || 30;
+    
+    // Ensure all required fields have values
+    const projectName = project.proj_short_name || 
+                       project.proj_name || 
+                       project.wbs_name || 
+                       project.project_name ||
+                       project.name ||
+                       'Imported XER Project';
+    
+    console.log('Final schedule data summary:', {
+      project: projectName,
+      start_date: projectStartDate,
+      end_date: projectEndDate,
+      duration: projectDuration,
+      taskCount: rootTasks.length
+    });
+    
+    const scheduleData = {
+      project: projectName,
+      start_date: projectStartDate,
+      end_date: projectEndDate,
+      duration: projectDuration,
+      tasks: rootTasks || []
+    };
+    
+    // Validate required fields before returning
+    if (!scheduleData.project || !scheduleData.start_date || !scheduleData.end_date || !scheduleData.duration) {
+      console.error('Missing required fields:', {
+        project: scheduleData.project,
+        start_date: scheduleData.start_date,
+        end_date: scheduleData.end_date,
+        duration: scheduleData.duration
+      });
+      throw new Error('Unable to extract required project information from XER file');
+    }
+    
+    return scheduleData;
+    
+  } catch (error) {
+    throw new Error(`Error converting XER data: ${error.message}`);
+  }
+};
+
+/**
+ * Build tasks without WBS (fallback when XER has no PROJWBS table)
+ */
+const buildTasksWithoutWBS = (tasks, project) => {
+  console.log('Building tasks without WBS structure...');
+  
+  const taskMap = new Map();
+  
+  // Map all tasks
+  tasks.forEach(task => {
+    const taskDuration = parseFloat(task.target_drtn_hr_cnt || task.remain_drtn_hr_cnt || task.orig_drtn_hr_cnt || 0) / 8;
+    const taskStartDate = formatDate(task.target_start_date || task.act_start_date || task.early_start_date);
+    const taskEndDate = formatDate(task.target_end_date || task.act_end_date || task.early_end_date);
+    
+    taskMap.set(task.task_id, {
+      id: task.task_id,
+      name: task.task_name || task.task_code || 'Unnamed Task',
+      duration: taskDuration > 0 ? Math.round(taskDuration) : 0,
+      start_date: taskStartDate || getCurrentDate(),
+      end_date: taskEndDate || getDatePlusDays(taskStartDate || getCurrentDate(), Math.max(taskDuration, 1)),
+      parent_task_id: task.parent_task_id || task.clndr_id,
+      subtasks: []
+    });
+  });
+  
+  // Build hierarchy based on parent_task_id
+  const rootTasks = [];
+  
+  taskMap.forEach(task => {
+    const parent = taskMap.get(task.parent_task_id);
+    if (parent && parent.id !== task.id) {
+      // This task has a parent
+      parent.subtasks.push({
+        name: task.name,
+        duration: task.duration,
+        start_date: task.start_date,
+        end_date: task.end_date,
+        subtasks: task.subtasks
+      });
+    } else {
+      // Root level task (no parent or parent not found)
+      buildSimpleTaskHierarchy(task, taskMap);
+      rootTasks.push({
+        name: task.name,
+        duration: task.duration,
+        start_date: task.start_date,
+        end_date: task.end_date,
+        subtasks: task.subtasks
+      });
+    }
+  });
+  
+  console.log(`Built ${rootTasks.length} root tasks`);
+  
+  // Calculate dates
+  const projectStartDate = findEarliestDate(rootTasks, 'start_date') || 
+                          formatDate(project.target_start_date) || 
+                          getCurrentDate();
+  const projectEndDate = findLatestDate(rootTasks, 'end_date') || 
+                        formatDate(project.target_end_date) || 
+                        getDatePlusDays(projectStartDate, 30);
+  const projectDuration = calculateDuration(projectStartDate, projectEndDate) || 30;
+  
+  return {
+    project: project.proj_short_name || project.proj_name || project.project_name || 'Imported XER Project',
+    start_date: projectStartDate,
+    end_date: projectEndDate,
+    duration: projectDuration,
+    tasks: rootTasks
+  };
+};
+
+/**
+ * Simple recursive hierarchy builder for tasks
+ */
+const buildSimpleTaskHierarchy = (parentTask, taskMap) => {
+  taskMap.forEach(task => {
+    if (task.parent_task_id === parentTask.id && task.id !== parentTask.id) {
+      buildSimpleTaskHierarchy(task, taskMap);
+      parentTask.subtasks.push({
+        name: task.name,
+        duration: task.duration,
+        start_date: task.start_date,
+        end_date: task.end_date,
+        subtasks: task.subtasks
+      });
+    }
+  });
+};
+
+/**
+ * Recursively build WBS hierarchy (WBS can contain child WBS)
+ */
+const buildWBSHierarchy = (parentWBS, wbsMap) => {
+  wbsMap.forEach(wbsItem => {
+    if (wbsItem.parent_wbs_id === parentWBS.id && wbsItem.id !== parentWBS.id) {
+      // This WBS item is a child of parentWBS
+      buildWBSHierarchy(wbsItem, wbsMap);
+      parentWBS.subtasks.push(wbsItem);
+    }
+  });
+};
+
+/**
+ * Convert WBS structure to task structure for our schema
+ */
+const convertWBSToTasks = (wbsList) => {
+  console.log(`Converting ${wbsList.length} WBS items to tasks...`);
+  const tasks = [];
+  
+  wbsList.forEach((wbs, index) => {
+    console.log(`Processing WBS ${index + 1}: "${wbs.name}" with ${wbs.tasks?.length || 0} tasks and ${wbs.subtasks?.length || 0} sub-WBS`);
+    // Calculate WBS dates from its tasks and sub-WBS
+    const allDates = [];
+    
+    // Get dates from direct tasks
+    wbs.tasks.forEach(task => {
+      if (task.start_date) allDates.push(new Date(task.start_date));
+      if (task.end_date) allDates.push(new Date(task.end_date));
+    });
+    
+    // Get dates from subtasks (child WBS)
+    const subTasks = convertWBSToTasks(wbs.subtasks);
+    subTasks.forEach(subTask => {
+      if (subTask.start_date) allDates.push(new Date(subTask.start_date));
+      if (subTask.end_date) allDates.push(new Date(subTask.end_date));
+    });
+    
+    // Calculate WBS start and end dates
+    let wbsStartDate = getCurrentDate();
+    let wbsEndDate = getCurrentDate();
+    
+    if (allDates.length > 0) {
+      const validDates = allDates.filter(d => !isNaN(d.getTime()));
+      if (validDates.length > 0) {
+        wbsStartDate = formatDate(new Date(Math.min(...validDates)));
+        wbsEndDate = formatDate(new Date(Math.max(...validDates)));
+      }
+    }
+    
+    const wbsDuration = calculateDuration(wbsStartDate, wbsEndDate) || 0;
+    
+    // Convert direct tasks to subtasks
+    const taskSubtasks = wbs.tasks.map(task => ({
+      name: task.name,
+      duration: task.duration,
+      start_date: task.start_date,
+      end_date: task.end_date,
+      subtasks: []
+    }));
+    
+    // Combine task subtasks with WBS subtasks
+    const allSubtasks = [...taskSubtasks, ...subTasks];
+    
+    // Create task for this WBS
+    tasks.push({
+      name: wbs.name,
+      duration: wbsDuration,
+      start_date: wbsStartDate,
+      end_date: wbsEndDate,
+      subtasks: allSubtasks
+    });
+  });
+  
+  return tasks;
+};
+
+/**
+ * Format date from XER format to our format
+ */
+const formatDate = (xerDate) => {
+  if (!xerDate) return '';
+  
+  try {
+    const date = new Date(xerDate);
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = String(date.getFullYear()).slice(-2);
+    
+    return `${day}-${month}-${year}`;
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Find earliest date in tasks
+ */
+const findEarliestDate = (tasks, dateField) => {
+  let earliest = null;
+  
+  const checkTasks = (taskList) => {
+    taskList.forEach(task => {
+      if (task[dateField] && task[dateField] !== '') {
+        const taskDate = new Date(task[dateField]);
+        if (!isNaN(taskDate.getTime())) {
+          if (!earliest || taskDate < new Date(earliest)) {
+            earliest = task[dateField];
+          }
+        }
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        checkTasks(task.subtasks);
+      }
+    });
+  };
+  
+  checkTasks(tasks);
+  return earliest;
+};
+
+/**
+ * Find latest date in tasks
+ */
+const findLatestDate = (tasks, dateField) => {
+  let latest = null;
+  
+  const checkTasks = (taskList) => {
+    taskList.forEach(task => {
+      if (task[dateField] && task[dateField] !== '') {
+        const taskDate = new Date(task[dateField]);
+        if (!isNaN(taskDate.getTime())) {
+          if (!latest || taskDate > new Date(latest)) {
+            latest = task[dateField];
+          }
+        }
+      }
+      if (task.subtasks && task.subtasks.length > 0) {
+        checkTasks(task.subtasks);
+      }
+    });
+  };
+  
+  checkTasks(tasks);
+  return latest;
+};
+
+/**
+ * Calculate duration between two dates
+ */
+const calculateDuration = (startDate, endDate) => {
+  if (!startDate || !endDate) return 30; // Default 30 days
+  
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 30;
+    
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 30;
+  } catch {
+    return 30;
+  }
+};
+
+/**
+ * Get current date in our format
+ */
+const getCurrentDate = () => {
+  const date = new Date();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+};
+
+/**
+ * Add days to a date and return in our format
+ */
+const getDatePlusDays = (dateStr, days) => {
+  try {
+    if (!dateStr) return getCurrentDate();
+    
+    // Parse our format (dd-Mon-yy)
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return getCurrentDate();
+    
+    const day = parseInt(parts[0]);
+    const month = new Date(Date.parse(parts[1] + " 1, 2000")).getMonth();
+    const year = parseInt("20" + parts[2]);
+    
+    const date = new Date(year, month, day);
+    date.setDate(date.getDate() + days);
+    
+    const newDay = String(date.getDate()).padStart(2, '0');
+    const newMonth = date.toLocaleDateString('en-US', { month: 'short' });
+    const newYear = String(date.getFullYear()).slice(-2);
+    
+    return `${newDay}-${newMonth}-${newYear}`;
+  } catch {
+    return getCurrentDate();
+  }
+};
+
+// ========================================
+// API Controllers
+// ========================================
+
+/**
+ * Import XER file and convert to detailed schedule
+ */
+export const importXERFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No XER file uploaded' 
+      });
+    }
+    
+    const filePath = req.file.path;
+    console.log('Processing XER file:', req.file.originalname);
+    
+    // Parse XER file
+    const xerTables = parseXERFile(filePath);
+    console.log('XER tables found:', Object.keys(xerTables));
+    
+    // Convert to our format
+    const scheduleData = convertXERToScheduleFormat(xerTables);
+    console.log('Converted schedule data:', {
+      project: scheduleData.project,
+      start_date: scheduleData.start_date,
+      end_date: scheduleData.end_date,
+      duration: scheduleData.duration,
+      taskCount: scheduleData.tasks.length
+    });
+    
+    // Validate data before saving
+    if (!scheduleData.project || !scheduleData.start_date || !scheduleData.end_date || scheduleData.duration === undefined) {
+      throw new Error('Invalid schedule data: missing required fields');
+    }
+    
+    // Save to database
+    const newSchedule = new DetailedSchedule(scheduleData);
+    await newSchedule.save();
+    
+    // Clean up uploaded file
+    fs.unlinkSync(filePath);
+    
+    res.status(201).json({
+      success: true,
+      message: 'XER file imported successfully',
+      schedule: newSchedule
+    });
+    
+  } catch (error) {
+    // Clean up file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('Error cleaning up file:', cleanupError);
+      }
+    }
+    
+    console.error('XER Import Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Get XER file upload status/preview without saving
+ */
+export const previewXERFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No XER file uploaded' 
+      });
+    }
+    
+    const filePath = req.file.path;
+    
+    // Parse XER file
+    const xerTables = parseXERFile(filePath);
+    
+    // Convert to our format
+    const scheduleData = convertXERToScheduleFormat(xerTables);
+    
+    // Clean up uploaded file
+    fs.unlinkSync(filePath);
+    
+    res.status(200).json({
+      success: true,
+      message: 'XER file parsed successfully',
+      preview: {
+        project: scheduleData.project,
+        start_date: scheduleData.start_date,
+        end_date: scheduleData.end_date,
+        duration: scheduleData.duration,
+        taskCount: scheduleData.tasks.length,
+        totalSubtasks: countSubtasks(scheduleData.tasks)
+      },
+      data: scheduleData
+    });
+    
+  } catch (error) {
+    // Clean up file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('Error cleaning up file:', cleanupError);
+      }
+    }
+    
+    console.error('XER Preview Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+/**
+ * Count total subtasks recursively
+ */
+const countSubtasks = (tasks) => {
+  let count = 0;
+  
+  const countRecursive = (taskList) => {
+    taskList.forEach(task => {
+      count += task.subtasks ? task.subtasks.length : 0;
+      if (task.subtasks && task.subtasks.length > 0) {
+        countRecursive(task.subtasks);
+      }
+    });
+  };
+  
+  countRecursive(tasks);
+  return count;
+};

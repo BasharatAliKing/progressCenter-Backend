@@ -39,6 +39,7 @@ import { fileURLToPath } from "url";
 import axios from "axios";
 import mongoose from "mongoose";
 import cameraRoutes from "./routes/cameraRoutes.js";
+import detailedScheduleRoutes from "./routes/detailedScheduleRoutes.js";
 const PORT = process.env.PORT || 4000;
 import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
@@ -74,12 +75,13 @@ cron.schedule("*/30 * * * *", async () => {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
- 
+
 // ------------------------
 // Routes
 // ------------------------
 app.use("/api", cameraRoutes);
-
+app.use("/api", detailedScheduleRoutes);
+ 
 // ------------------------
 // MediaMTX Launch
 // ------------------------
@@ -99,16 +101,14 @@ mediamtx.stdout.on("data", (data) => console.log("MediaMTX:", data.toString().tr
 mediamtx.stderr.on("data", (data) => console.error("MediaMTX err:", data.toString().trim()));
 mediamtx.on("error", (err) => console.error("MediaMTX failed to start:", err));
 mediamtx.on("close", (code) => console.log("MediaMTX stopped:", code));
-
 // ------------------------
 // Test route
 // ------------------------
+
 app.get("/", (req, res) => res.send("✅ MediaMTX backend running"));
 
 // ------------------------
 // Start server
 // ------------------------
+
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-
-
-

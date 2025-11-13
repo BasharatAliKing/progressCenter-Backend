@@ -75,7 +75,6 @@ export const getCameras = async (req, res) => {
     });
   }
 };
-
 // ✅ Get single camera
 export const getCameraById = async (req, res) => {
   try {
