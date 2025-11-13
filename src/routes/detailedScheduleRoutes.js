@@ -30,7 +30,7 @@ router.post("/schedule/preview-xer", xerUpload.single('xerFile'), handleUploadEr
 router.post("/schedule/test", (req, res) => {
   const sampleData = {
     project: "Test Project from API",
-    start_date: "10-Oct-25",
+    start_date: "10-Oct-25", 
     end_date: "10-Jun-26", 
     duration: 244,
     tasks: [
