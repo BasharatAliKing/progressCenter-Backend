@@ -1,40 +1,21 @@
-# api: yes
-# rtsp: yes
-# rtmp: yes
-# hls: yes
-# webrtc: yes
-
-# paths:
-#   cam:
-#      source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1761129402&id=898660681428127744&c=1be1517123&t=0e7a6b143a1403fc8e03d8aa08c2408b6a466f654bb3bf905a1526a82f50f2ac&ev=100
-api: yes
-rtsp: yes
-rtmp: yes
-hls: yes
-webrtc: yes
-
+api: 'yes'
+rtsp: 'yes'
+rtmp: 'yes'
+hls: 'yes'
+webrtc: 'yes'
 paths:
-# Neels Gumbad Camera 01
-  # Example static path (can be removed if you use the API to add cameras)
-  "68fb21804dda076f1e2b55da":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FN1565508_1_1?expire=1762833629&id=905808726251143168&c=1be1517123&t=8fd8664757868ab8698796f8ddd3c10c949bd1a116c0f4bf12a79ce5e6651afa&ev=100
-    sourceOnDemand: yes
-# NSIT Camera 01
-  "690b14a7eabc8246cb8ff39e":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1762920401&id=906172674024443904&c=3b8a6091ab&t=50fe5ea228698915bc400626cc4a189f75a736fb774a8a98179779385966cca7&ev=100
-    sourceOnDemand: yes
-# NSIT Camera 02
-  "68fafe3bec2ad04e765828c2":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1761810323&id=901516672071471104&c=3b8a6091ab&t=8fad15a0ff8483260ac1b5559101774074f4d8acd1465bc26bf0bc7e683e53a5&ev=100
-    sourceOnDemand: yes
-# NSIT Camera 03
-  "68fafeccec2ad04e765828c9":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1761809885&id=901514832813916160&c=3b8a6091ab&t=50d466545a886c6567af37b2f08b4655a957a07d04d7d19c011556158e8564fb&ev=100
-    sourceOnDemand: yes
-# NSIT Camera 04
-  "68faffa324c714ee7e10fb3a":
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1761809614&id=901513695500255232&c=3b8a6091ab&t=abb55be70c48666c5ef99c8f107106dbd2444109e7f0ebfe7c37549638c581b9&ev=100
-    sourceOnDemand: yes
-
-
-    
+  695790375d8eeb3dd0168102:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FC9147667_1_1?expire=1768392346&id=931639756064264192&c=02d747dc55&t=9b29de6776f693c5680cde1e5ec0b114ca2726da4cf603bec821f529f84dfb98&ev=100
+    sourceOnDemand: true
+  69677cc1cfd0fc1d4e20afe0:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1768978788&id=931925644792107008&c=3b8a6091ab&t=06164c8c27c02a4b8082ceceae4d2fe347e557de8b840f735095263a9e84695a&ev=100
+    sourceOnDemand: true
+  69677f2f8a0a8d9574154774:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1768978789&id=931925649288749056&c=3b8a6091ab&t=8996a04a6a96faf07983310a705697bae03faf18f603061c874399439becd561&ev=100
+    sourceOnDemand: true
+  696780fa8a0a8d9574154785:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1768978789&id=931925651709046784&c=3b8a6091ab&t=0b3f9244039ce7d16c532cf6691564f9601645af6e941ae82537676280ce0103&ev=100
+    sourceOnDemand: true
+  69678446b07aa2f9204ddc65:
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1768978790&id=931925654606241792&c=3b8a6091ab&t=47301ac34f526213e4e9751108b0c00d249aaa361a18df308eaed1326ec82188&ev=100
+    sourceOnDemand: true

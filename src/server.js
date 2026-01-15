@@ -1,32 +1,3 @@
-// import dotenv from "dotenv";
-// dotenv.config();
-// import express from "express";
-// import cors from "cors";
-// import { spawn } from "child_process";
-// import path from "path";
-// import { fileURLToPath } from "url";
-
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-
-// const app = express();
-// app.use(cors());
-
-// const PORT = process.env.PORT || 4000;
-
-// // Launch MediaMTX automatically
-// const exe = process.platform === "win32" ? "mediamtx.exe" : "./mediamtx";
-// const configPath = path.join(__dirname, "../mediamtx.yml");
-
-// console.log("🎬 Launching MediaMTX...");
-// const mediamtx = spawn(exe, [configPath], { cwd: path.join(__dirname, "../") });
-
-// mediamtx.stdout.on("data", (d) => console.log("MediaMTX:", d.toString().trim()));
-// mediamtx.stderr.on("data", (d) => console.error("MediaMTX err:", d.toString().trim()));
-// mediamtx.on("close", (code) => console.log("MediaMTX stopped:", code));
-
-// app.get("/", (req, res) => res.send("✅ MediaMTX backend running"));
-// app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
 
 
 import dotenv from "dotenv";
@@ -40,10 +11,12 @@ import axios from "axios";
 import mongoose from "mongoose";
 import cameraRoutes from "./routes/cameraRoutes.js";
 import detailedScheduleRoutes from "./routes/detailedScheduleRoutes.js";
+import hikvisionRoutes from "./routes/hikvisionRoutes.js";
 const PORT = process.env.PORT || 4000;
 import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
 import snapshotRoutes from "./routes/snapshotRoutes.js";
+import { renewStreamUrls } from "./jobs/streamRenew.job.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,20 +25,29 @@ app.use(cors());
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 app.use("/api/snapshots", snapshotRoutes);
-// 🕒 Cron job every 30 minutes
+
+// 🕒 Cron job every 30 minutes for snapshots
 cron.schedule("*/30 * * * *", async () => {
   console.log(`⏱ Running snapshot job at ${new Date().toLocaleString()}`);
   try {
     const { data } = await axios.get(process.env.CAMERA_API);
-     
     // ✅ Access actual camera array
     const cameras = data.cameras || [];
- 
     for (const cam of cameras) {
       if (cam.rtmpPath) await captureSnapshot(cam);
     } 
   } catch (err) {
     console.error("❌ Error fetching cameras:", err.message);
+  }
+});
+
+// 🔄 Cron job every 5 days at 11:55 PM to renew Hikvision stream URLs (PRODUCTION - URLs expire in 6 days)
+cron.schedule("55 23 */5 * *", async () => {
+  console.log(`🔄 Running stream URL renewal at ${new Date().toLocaleString()}`);
+  try {
+    await renewStreamUrls();
+  } catch (err) {
+    console.error("❌ Stream renewal cron error:", err.message);
   }
 });
 
@@ -75,12 +57,13 @@ cron.schedule("*/30 * * * *", async () => {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
-
+ 
 // ------------------------
 // Routes
 // ------------------------
 app.use("/api", cameraRoutes);
 app.use("/api", detailedScheduleRoutes);
+app.use("/api", hikvisionRoutes);
  
 // ------------------------
 // MediaMTX Launch

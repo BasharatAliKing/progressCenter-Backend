@@ -4,41 +4,47 @@
 
 ---
 
-## � XER FILE IMPORT Operations
+## � PRIMAVERA P6 FILE IMPORT Operations
 
-### 1. Import XER File (Save to Database)
+### 1. Import Primavera P6 File (Save to Database)
 **POST** `/api/schedule/import-xer`
 
 **Content-Type:** `multipart/form-data`
 
+**Supported File Types:**
+- XER files (.xer)
+- XML files (.xml)
+
 **Form Data:**
-- `xerFile`: XER file (max 50MB)
+- `xerFile`: XER or XML file (max 50MB)
 
 **Response:**
 ```json
 {
   "success": true,
   "message": "XER file imported successfully",
-  "schedule": {
-    "_id": "...",
-    "project": "Project Name from XER",
-    "start_date": "10-Oct-25",
-    "end_date": "10-Jun-26",
-    "duration": 244,
-    "tasks": [...]
+  "data": {
+    "scheduleId": "...",
+    "project": "Project Name from file",
+    "tasksCount": 150,
+    "fileType": "XER"
   }
 }
 ```
 
 ---
 
-### 2. Preview XER File (Without Saving)
+### 2. Preview Primavera P6 File (Without Saving)
 **POST** `/api/schedule/preview-xer`
 
 **Content-Type:** `multipart/form-data`
 
+**Supported File Types:**
+- XER files (.xer)
+- XML files (.xml)
+
 **Form Data:**
-- `xerFile`: XER file (max 50MB)
+- `xerFile`: XER or XML file (max 50MB)
 
 **Response:**
 ```json

@@ -26,6 +26,8 @@ const DetailedScheduleSchema = new mongoose.Schema({
   start_date: { type: String, required: true },
   end_date: { type: String, required: true },
   duration: { type: Number, required: true },
+  schedulePercentageComplete: { type: Number, default: 0 },
+  performancePercentageComplete: { type: Number, default: 0 },
   tasks: [TaskSchema]
 }, { timestamps: true });
 

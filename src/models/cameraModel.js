@@ -13,12 +13,16 @@ const cameraSchema = new mongoose.Schema(
     city: { type: String },
     image: { type: String }, // saved path: /images/xxxx.jpg
     aqi_api_key: { type: String },
-    // members: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "User", // assuming you have a User model
-    //   },
-    // ],
+    // Hikvision integration fields
+    hikvisionDeviceSerial: { type: String }, // Device serial number (e.g., "FC9147667")
+    hikvisionResourceId: { type: String }, // Camera resource ID from Hikvision
+    hikvisionEnabled: { type: Boolean, default: false }, // Whether to auto-update stream URL
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User", // assuming you have a User model
+      },
+    ],
   },
   { timestamps: true }
 );

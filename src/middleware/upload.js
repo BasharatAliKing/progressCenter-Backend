@@ -18,16 +18,19 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter to accept only XER files
+// File filter to accept XER and XML files
 const fileFilter = (req, file, cb) => {
   // Check file extension
-  const allowedExtensions = ['.xer', '.XER'];
+  const allowedExtensions = ['.xer', '.XER', '.xml', '.XML'];
   const fileExtension = path.extname(file.originalname).toLowerCase();
   
-  if (allowedExtensions.includes(fileExtension) || file.mimetype === 'application/octet-stream') {
+  if (allowedExtensions.includes(fileExtension) || 
+      file.mimetype === 'application/octet-stream' || 
+      file.mimetype === 'text/xml' || 
+      file.mimetype === 'application/xml') {
     cb(null, true);
   } else {
-    cb(new Error('Only XER files are allowed!'), false);
+    cb(new Error('Only XER and XML files are allowed!'), false);
   }
 };
 

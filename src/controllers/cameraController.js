@@ -3,7 +3,7 @@ import axios from "axios";
 // ✅ Add new camera with image upload
 export const addCamera = async (req, res) => {
   try {
-    const { name, rtmpPath, status, coordinates, location, city, members ,aqi_api_key } =
+    const { name, rtmpPath, status, coordinates, location, city, members ,aqi_api_key ,hikvisionDeviceSerial, hikvisionResourceId } =
       req.body;
     const image = req.file ? `/images/${req.file.filename}` : null;
     const newCamera = new Camera({
@@ -15,6 +15,8 @@ export const addCamera = async (req, res) => {
       city,
       image,
       aqi_api_key,
+      hikvisionDeviceSerial,
+      hikvisionResourceId,
       members: members ? JSON.parse(members) : [],
     });
 
@@ -35,23 +37,44 @@ export const getCameras = async (req, res) => {
     // 1️⃣ Fetch all cameras from MongoDB
     const cameras = await Camera.find();
 
-    // 2️⃣ For each camera, if it has an aqi_api_key, fetch AQI data
+    // 2️⃣ Optional: Include AQI data if requested (default: skip for speed)
+    const includeAQI = req.query.includeAQI === 'true';
+
+    if (!includeAQI) {
+      // Fast response without AQI data
+      return res.status(200).json({
+        success: true,
+        cameras: cameras.map(cam => ({
+          ...cam.toObject(),
+          aqiData: null,
+        })),
+      });
+    }
+
+    // 3️⃣ Fetch AQI data with timeout (only if requested)
     const camerasWithAQI = await Promise.all(
       cameras.map(async (camera) => {
         if (camera.aqi_api_key) {
           try {
-            const response = await fetch(camera.aqi_api_key);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+
+            const response = await fetch(camera.aqi_api_key, {
+              signal: controller.signal
+            });
+            clearTimeout(timeout);
+            
             const aqiData = await response.json();
 
             return {
               ...camera.toObject(),
-              aqiData, // attach AQI data directly to this camera
+              aqiData,
             };
           } catch (err) {
             console.error(`AQI fetch failed for ${camera.name}:`, err.message);
             return {
               ...camera.toObject(),
-              aqiData: null, // keep null if AQI API fails
+              aqiData: null,
             };
           }
         } else {
@@ -62,7 +85,8 @@ export const getCameras = async (req, res) => {
         }
       })
     );
-    // 3️⃣ Send combined result
+    
+    // 4️⃣ Send combined result
     res.status(200).json({
       success: true,
       cameras: camerasWithAQI,
