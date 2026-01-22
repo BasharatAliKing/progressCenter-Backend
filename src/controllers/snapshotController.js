@@ -71,17 +71,135 @@ export const captureAllSnapshots = async (req, res) => {
 export const getSnapshots = async (req, res) => {
   try {
     const { cameraId } = req.params;
-    const { from, to } = req.query;
+    const { from, to, date } = req.query;
 
     const query = { cameraId };
-    if (from && to) {
+
+    // If a date range is provided, use it; otherwise default to a single day (today or the provided date)
+    if (from || to) {
+      if (!from || !to) {
+        return res.status(400).json({ message: "Provide both 'from' and 'to' when using a range." });
+      }
       query.createdAt = { $gte: new Date(from), $lte: new Date(to) };
+    } else {
+      const targetDate = date ? new Date(date) : new Date();
+      if (Number.isNaN(targetDate.getTime())) {
+        return res.status(400).json({ message: "Invalid 'date' value. Use YYYY-MM-DD." });
+      }
+
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      query.createdAt = { $gte: startOfDay, $lte: endOfDay };
     }
 
     const snapshots = await Snapshot.find(query).sort({ createdAt: -1 });
     res.json(snapshots);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ Build a timelapse by sampling images per day within a date range
+export const getTimelapse = async (req, res) => {
+  try {
+    const { cameraId } = req.params;
+    const { startDate, endDate, perDay } = req.query;
+
+    const framesPerDay = parseInt(perDay, 10);
+    if (!startDate || !endDate || Number.isNaN(framesPerDay) || framesPerDay <= 0) {
+      return res.status(400).json({
+        message: "Provide valid startDate, endDate (YYYY-MM-DD) and perDay (>0)",
+      });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return res.status(400).json({ message: "Invalid startDate or endDate. Use YYYY-MM-DD." });
+    }
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+    if (start > end) {
+      return res.status(400).json({ message: "startDate must be before or equal to endDate" });
+    }
+
+    const snapshots = await Snapshot.find({
+      cameraId,
+      createdAt: { $gte: start, $lte: end },
+    })
+      .sort({ createdAt: 1 })
+      .select("url createdAt");
+
+    // Group snapshots by calendar day to sample frames evenly
+    const grouped = new Map();
+    for (const snap of snapshots) {
+      const dayKey = snap.createdAt.toISOString().slice(0, 10);
+      if (!grouped.has(dayKey)) grouped.set(dayKey, []);
+      grouped.get(dayKey).push(snap);
+    }
+
+    const days = [];
+    for (const [dateKey, snaps] of grouped.entries()) {
+      if (snaps.length === 0) continue;
+      if (snaps.length <= framesPerDay) {
+        days.push({
+          date: dateKey,
+          frames: snaps.map((s) => ({ url: s.url, createdAt: s.createdAt })),
+        });
+        continue;
+      }
+
+      // Evenly sample across the day while always including first/last frame
+      const step = framesPerDay === 1 ? 0 : (snaps.length - 1) / (framesPerDay - 1);
+      const sampled = [];
+      for (let i = 0; i < framesPerDay; i += 1) {
+        const idx = Math.round(i * step);
+        sampled.push(snaps[idx]);
+      }
+
+      days.push({
+        date: dateKey,
+        frames: sampled.map((s) => ({ url: s.url, createdAt: s.createdAt })),
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      cameraId,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      perDay: framesPerDay,
+      days,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ✅ Get dates (and counts) that have images for a camera
+export const getSnapshotDates = async (req, res) => {
+  try {
+    const { cameraId } = req.params;
+
+    const results = await Snapshot.aggregate([
+      { $match: { cameraId } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: -1 } },
+    ]);
+
+    const dates = results.map((r) => ({ date: r._id, count: r.count }));
+
+    res.status(200).json({ success: true, cameraId, dates });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 

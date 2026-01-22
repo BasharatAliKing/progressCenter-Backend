@@ -46,7 +46,7 @@ cron.schedule("55 23 */5 * *", async () => {
   console.log(`🔄 Running stream URL renewal at ${new Date().toLocaleString()}`);
   try {
     await renewStreamUrls();
-  } catch (err) {
+  } catch (err){
     console.error("❌ Stream renewal cron error:", err.message);
   }
 });

@@ -5,7 +5,7 @@ hls: 'yes'
 webrtc: 'yes'
 paths:
   695790375d8eeb3dd0168102:
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FC9147667_1_1?expire=1768392346&id=931639756064264192&c=02d747dc55&t=9b29de6776f693c5680cde1e5ec0b114ca2726da4cf603bec821f529f84dfb98&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FC9147667_1_1?expire=1769423576&id=933791224387870720&c=02d747dc55&t=65431d031e4467d14aadfeeeca88213fa635bda0a529cb85de2ccb964ead7242&ev=100
     sourceOnDemand: true
   69677cc1cfd0fc1d4e20afe0:
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1768978788&id=931925644792107008&c=3b8a6091ab&t=06164c8c27c02a4b8082ceceae4d2fe347e557de8b840f735095263a9e84695a&ev=100

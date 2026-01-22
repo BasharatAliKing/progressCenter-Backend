@@ -43,7 +43,7 @@ router.post("/schedule/test", (req, res) => {
       }
     ]
   };
-  
+
   req.body = sampleData;
   return createSchedule(req, res);
 });
