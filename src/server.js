@@ -17,11 +17,13 @@ import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
 import snapshotRoutes from "./routes/snapshotRoutes.js";
 import { renewStreamUrls } from "./jobs/streamRenew.job.js";
+import morgan from "morgan";  
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
+app.use(morgan("dev")); 
 app.use(express.json());
 app.use("/images", express.static("public/images"));
 app.use("/api/snapshots", snapshotRoutes);
@@ -29,7 +31,7 @@ app.use("/api/snapshots", snapshotRoutes);
 // 🕒 Cron job every 30 minutes for snapshots
 cron.schedule("*/30 * * * *", async () => {
   console.log(`⏱ Running snapshot job at ${new Date().toLocaleString()}`);
-  try {
+  try { 
     const { data } = await axios.get(process.env.CAMERA_API);
     // ✅ Access actual camera array
     const cameras = data.cameras || [];
@@ -79,14 +81,14 @@ const configPath = path.join(__dirname, "../mediamtx.yml"); // YAML in project r
 // Spawn MediaMTX process
 console.log("🎬 Launching MediaMTX...");
 const mediamtx = spawn(exePath, [configPath], { cwd: path.join(__dirname, "..") });
-
+    
 mediamtx.stdout.on("data", (data) => console.log("MediaMTX:", data.toString().trim()));
 mediamtx.stderr.on("data", (data) => console.error("MediaMTX err:", data.toString().trim()));
 mediamtx.on("error", (err) => console.error("MediaMTX failed to start:", err));
 mediamtx.on("close", (code) => console.log("MediaMTX stopped:", code));
 // ------------------------
-// Test route
-// ------------------------
+// Test route 
+// ------------------------ 
 
 app.get("/", (req, res) => res.send("✅ MediaMTX backend running"));
 

@@ -19,7 +19,12 @@ router.get("/latest/:id", getLatestImage);
 router.get("/camera/:cameraId/dates", getSnapshotDates);
 
 // Get timelapse frames for a camera across a date range
+//GET /api/snapshots/:cameraId/timelapse?range=1day&timeFilter=8-5
+// Returns ALL snapshots from 8am-5pm today
+//GET /api/snapshots/:cameraId/timelapse?range=30days&perDay=5
+// Returns 5 sampled snapshots per day for the last 30 days
 router.get("/camera/:cameraId/timelapse", getTimelapse);
+router.get("/:cameraId/timelapse", getTimelapse);
 
 // Get snapshots by cameraId + date range
 router.get("/camera/:cameraId", getSnapshots);

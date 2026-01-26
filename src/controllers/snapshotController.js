@@ -106,24 +106,83 @@ export const getSnapshots = async (req, res) => {
 export const getTimelapse = async (req, res) => {
   try {
     const { cameraId } = req.params;
-    const { startDate, endDate, perDay } = req.query;
+    const { range, perDay, timeFilter } = req.query;
 
-    const framesPerDay = parseInt(perDay, 10);
-    if (!startDate || !endDate || Number.isNaN(framesPerDay) || framesPerDay <= 0) {
+    if (!range) {
       return res.status(400).json({
-        message: "Provide valid startDate, endDate (YYYY-MM-DD) and perDay (>0)",
+        message: "Provide valid range parameter",
+      });
+    }
+    // Parse perDay, if not provided or invalid, return all frames
+    const framesPerDay = perDay ? parseInt(perDay, 10) : null;
+    if (framesPerDay !== null && (Number.isNaN(framesPerDay) || framesPerDay <= 0)) {
+      return res.status(400).json({
+        message: "perDay must be a positive number if provided",
       });
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return res.status(400).json({ message: "Invalid startDate or endDate. Use YYYY-MM-DD." });
-    }
-    start.setHours(0, 0, 0, 0);
+    // Calculate date range based on the 'range' parameter
+    const end = new Date();
     end.setHours(23, 59, 59, 999);
-    if (start > end) {
-      return res.status(400).json({ message: "startDate must be before or equal to endDate" });
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    switch (range) {
+      case "1day":
+        // start is already today
+        break;
+      case "5days":
+        start.setDate(start.getDate() - 4);
+        break;
+      case "15days":
+        start.setDate(start.getDate() - 14);
+        break;
+      case "30days":
+        start.setDate(start.getDate() - 29);
+        break;
+      case "3months":
+        start.setMonth(start.getMonth() - 3);
+        break;
+      case "6months":
+        start.setMonth(start.getMonth() - 6);
+        break;
+      case "1year":
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      case "2years":
+        start.setFullYear(start.getFullYear() - 2);
+        break;
+      case "3years":
+        start.setFullYear(start.getFullYear() - 3);
+        break;
+      default:
+        return res.status(400).json({
+          message: "Invalid range. Use: 1day, 5days, 15days, 30days, 3months, 6months, 1year, 2years, 3years",
+        });
+    }
+
+    // Parse time filter
+    let startHour = 0;
+    let endHour = 23;
+    if (timeFilter) {
+      switch (timeFilter) {
+        case "8-5":
+          startHour = 8;
+          endHour = 17;
+          break;
+        case "6-6":
+          startHour = 6;
+          endHour = 18;
+          break;
+        case "24h":
+          startHour = 0;
+          endHour = 23;
+          break;
+        default:
+          return res.status(400).json({
+            message: "Invalid timeFilter. Use: 8-5, 6-6, 24h",
+          });
+      }
     }
 
     const snapshots = await Snapshot.find({
@@ -133,9 +192,17 @@ export const getTimelapse = async (req, res) => {
       .sort({ createdAt: 1 })
       .select("url createdAt");
 
+    // Filter by time of day if specified
+    const filteredSnapshots = timeFilter
+      ? snapshots.filter((snap) => {
+          const hour = snap.createdAt.getHours();
+          return hour >= startHour && hour <= endHour;
+        })
+      : snapshots;
+
     // Group snapshots by calendar day to sample frames evenly
     const grouped = new Map();
-    for (const snap of snapshots) {
+    for (const snap of filteredSnapshots) {
       const dayKey = snap.createdAt.toISOString().slice(0, 10);
       if (!grouped.has(dayKey)) grouped.set(dayKey, []);
       grouped.get(dayKey).push(snap);
@@ -144,7 +211,9 @@ export const getTimelapse = async (req, res) => {
     const days = [];
     for (const [dateKey, snaps] of grouped.entries()) {
       if (snaps.length === 0) continue;
-      if (snaps.length <= framesPerDay) {
+      
+      // If framesPerDay is not specified, return all frames
+      if (framesPerDay === null || snaps.length <= framesPerDay) {
         days.push({
           date: dateKey,
           frames: snaps.map((s) => ({ url: s.url, createdAt: s.createdAt })),
@@ -169,9 +238,11 @@ export const getTimelapse = async (req, res) => {
     res.status(200).json({
       success: true,
       cameraId,
+      range,
+      timeFilter: timeFilter || "24h",
       startDate: start.toISOString(),
       endDate: end.toISOString(),
-      perDay: framesPerDay,
+      perDay: framesPerDay || "all",
       days,
     });
   } catch (err) {

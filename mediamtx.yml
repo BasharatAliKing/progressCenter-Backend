@@ -8,14 +8,14 @@ paths:
     source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FC9147667_1_1?expire=1769423576&id=933791224387870720&c=02d747dc55&t=65431d031e4467d14aadfeeeca88213fa635bda0a529cb85de2ccb964ead7242&ev=100
     sourceOnDemand: true
   69677cc1cfd0fc1d4e20afe0:
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1768978788&id=931925644792107008&c=3b8a6091ab&t=06164c8c27c02a4b8082ceceae4d2fe347e557de8b840f735095263a9e84695a&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_2_1?expire=1769925896&id=935898107045990400&c=3b8a6091ab&t=2bbf07850547576c5775a8d63d736d7da852c53150f8e5f7378449ff86f9fe5f&ev=100
     sourceOnDemand: true
   69677f2f8a0a8d9574154774:
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1768978789&id=931925649288749056&c=3b8a6091ab&t=8996a04a6a96faf07983310a705697bae03faf18f603061c874399439becd561&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_4_1?expire=1769925897&id=935898109877198848&c=3b8a6091ab&t=478bb76f30d82b4d0cb78ca3b2f31a59c14c9bc09284ddaa07a700c3458fbd17&ev=100
     sourceOnDemand: true
   696780fa8a0a8d9574154785:
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1768978789&id=931925651709046784&c=3b8a6091ab&t=0b3f9244039ce7d16c532cf6691564f9601645af6e941ae82537676280ce0103&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_3_1?expire=1769925898&id=935898114656026624&c=3b8a6091ab&t=155bf45fbffbf169c0541ca12f82295f9271c7e7f2f85c33b62fb68ecae443ad&ev=100
     sourceOnDemand: true
   69678446b07aa2f9204ddc65:
-    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1768978790&id=931925654606241792&c=3b8a6091ab&t=47301ac34f526213e4e9751108b0c00d249aaa361a18df308eaed1326ec82188&ev=100
+    source: rtmp://vtmsgpzl.ezvizlife.com:1935/v3/openlive/FB1209754_1_1?expire=1769925899&id=935898119848120320&c=3b8a6091ab&t=37dad1836c932a8b1504b239f3b16e993e26c11af3c01c30709e85b0b5c7ec9c&ev=100
     sourceOnDemand: true
