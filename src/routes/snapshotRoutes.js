@@ -5,6 +5,10 @@ import {
   getSnapshotDates,
   getLatestImage,
   getTimelapse,
+  createTimelapseVideo,
+  getUserVideos,
+  getVideoById,
+  deleteVideo,
 } from "../controllers/snapshotController.js";
 
 const router = express.Router();
@@ -25,6 +29,23 @@ router.get("/camera/:cameraId/dates", getSnapshotDates);
 // Returns 5 sampled snapshots per day for the last 30 days
 router.get("/camera/:cameraId/timelapse", getTimelapse);
 router.get("/:cameraId/timelapse", getTimelapse);
+
+// Create timelapse video from images
+// POST /api/snapshots/:cameraId/timelapse/video
+// Body: { range, perDay?, timeFilter?, username, userId, fps? }
+router.post("/:cameraId/timelapse/video", createTimelapseVideo);
+
+// Get all videos for a user
+// GET /api/snapshots/videos/user/:userId?cameraId=xxx
+router.get("/videos/user/:userId", getUserVideos);
+
+// Get video by ID
+// GET /api/snapshots/videos/:videoId
+router.get("/videos/:videoId", getVideoById);
+
+// Delete video
+// DELETE /api/snapshots/videos/:videoId
+router.delete("/videos/:videoId", deleteVideo);
 
 // Get snapshots by cameraId + date range
 router.get("/camera/:cameraId", getSnapshots);

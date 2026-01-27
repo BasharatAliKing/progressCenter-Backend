@@ -102,10 +102,7 @@ export const getCameras = async (req, res) => {
 // ✅ Get single camera
 export const getCameraById = async (req, res) => {
   try {
-    const camera = await Camera.findById(req.params.id).populate(
-      "members",
-      "name email"
-    );
+    const camera = await Camera.findById(req.params.id);
     if (!camera)
       return res
         .status(404)

@@ -17,6 +17,7 @@ import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
 import snapshotRoutes from "./routes/snapshotRoutes.js";
 import { renewStreamUrls } from "./jobs/streamRenew.job.js";
+import { cleanupOldVideos } from "./jobs/cleanupVideos.job.js";
 import morgan from "morgan";  
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,7 @@ app.use(cors());
 app.use(morgan("dev")); 
 app.use(express.json());
 app.use("/images", express.static("public/images"));
+app.use("/videos", express.static("public/videos"));
 app.use("/api/snapshots", snapshotRoutes);
 
 // 🕒 Cron job every 30 minutes for snapshots
@@ -50,6 +52,16 @@ cron.schedule("55 23 */5 * *", async () => {
     await renewStreamUrls();
   } catch (err){
     console.error("❌ Stream renewal cron error:", err.message);
+  }
+});
+
+// 🧹 Cron job every day at 2:00 AM to delete videos older than 7 days
+cron.schedule("0 2 * * *", async () => {
+  console.log(`🧹 Running video cleanup at ${new Date().toLocaleString()}`);
+  try {
+    await cleanupOldVideos();
+  } catch (err) {
+    console.error("❌ Video cleanup cron error:", err.message);
   }
 });
 
