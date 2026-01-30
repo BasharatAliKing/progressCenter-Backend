@@ -22,7 +22,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
+
+const allowedOrigins = [
+  "https://nespakprogresscenter.com",
+  "https://api.nespakprogresscenter.com",
+  "http://localhost:5173"
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 app.use(morgan("dev")); 
 app.use(express.json());
 app.use("/images", express.static("public/images"));
