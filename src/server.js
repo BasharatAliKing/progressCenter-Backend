@@ -1,5 +1,3 @@
-
-
 import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
@@ -12,6 +10,7 @@ import mongoose from "mongoose";
 import cameraRoutes from "./routes/cameraRoutes.js";
 import detailedScheduleRoutes from "./routes/detailedScheduleRoutes.js";
 import hikvisionRoutes from "./routes/hikvisionRoutes.js";
+import userRoutes from "./routes/userRouter.js";
 const PORT = process.env.PORT || 4000;
 import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
@@ -78,6 +77,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use("/api", cameraRoutes);
 app.use("/api", detailedScheduleRoutes);
 app.use("/api", hikvisionRoutes);
+app.use("/api", userRoutes);
  
 // ------------------------
 // MediaMTX Launch
