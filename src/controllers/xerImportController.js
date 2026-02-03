@@ -695,10 +695,17 @@ export const importXERFile = async (req, res) => {
         // Convert to schedule format
         console.log('\n2. Converting to schedule format...');
         const scheduleData = convertXERToScheduleFormat(tables);
+
+        // Optional project name override from request body
+        const projectName = String(req.body?.project_name || req.body?.projectName || '').trim();
+        scheduleData.project_name = projectName || scheduleData.project;
         
         // Save to database
         console.log('\n3. Saving to database...');
         const schedule = new DetailedSchedule(scheduleData);
+        if (!schedule.project_name) {
+            schedule.project_name = schedule.project;
+        }
         await schedule.save();
         
         console.log('✅ Schedule saved successfully');
@@ -714,6 +721,7 @@ export const importXERFile = async (req, res) => {
             data: {
                 scheduleId: schedule._id,
                 project: schedule.project,
+                project_name: schedule.project_name,
                 tasksCount: scheduleData.tasks.length,
                 fileType: isXML ? 'XML' : 'XER'
             }
@@ -762,6 +770,10 @@ export const previewXERFile = async (req, res) => {
         // Parse and convert based on file type
         const tables = isXML ? await parseXMLFile(filePath) : parseXERFile(filePath);
         const scheduleData = convertXERToScheduleFormat(tables);
+
+        // Optional project name override from request body
+        const projectName = String(req.body?.project_name || req.body?.projectName || '').trim();
+        scheduleData.project_name = projectName || scheduleData.project;
         
         // Delete uploaded file
         fs.unlinkSync(filePath);

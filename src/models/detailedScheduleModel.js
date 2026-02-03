@@ -23,6 +23,7 @@ const TaskSchema = new mongoose.Schema({
 
 const DetailedScheduleSchema = new mongoose.Schema({
   project: { type: String, required: true },
+  project_name: { type: String },
   start_date: { type: String, required: true },
   end_date: { type: String, required: true },
   duration: { type: Number, required: true },

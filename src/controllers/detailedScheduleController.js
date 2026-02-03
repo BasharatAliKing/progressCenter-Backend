@@ -8,7 +8,7 @@ export const createSchedule = async (req, res) => {
     console.log('Received schedule data:', req.body);
     
     // Validate required fields
-    const { project, start_date, end_date, duration } = req.body;
+    const { project, project_name, start_date, end_date, duration } = req.body;
     if (!project || !start_date || !end_date || duration === undefined) {
       return res.status(400).json({
         success: false,
