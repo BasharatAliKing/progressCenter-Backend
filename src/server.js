@@ -11,12 +11,14 @@ import cameraRoutes from "./routes/cameraRoutes.js";
 import detailedScheduleRoutes from "./routes/detailedScheduleRoutes.js";
 import hikvisionRoutes from "./routes/hikvisionRoutes.js";
 import userRoutes from "./routes/userRouter.js";
+import pluginRoutes from "./routes/pluginRoutes.js";
 const PORT = process.env.PORT || 4000;
 import cron from "node-cron";
 import { captureSnapshot } from "./controllers/snapshotController.js";
 import snapshotRoutes from "./routes/snapshotRoutes.js";
 import { renewStreamUrls } from "./jobs/streamRenew.job.js";
 import { cleanupOldVideos } from "./jobs/cleanupVideos.job.js";
+import gridwall from "./routes/gridWallRoutes.js";
 import morgan from "morgan";  
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,7 +58,7 @@ cron.schedule("*/30 * * * *", async () => {
 });
 
 // 🔄 Cron job every 5 days at 11:55 PM to renew Hikvision stream URLs (PRODUCTION - URLs expire in 6 days)
-cron.schedule("55 23 */5 * *", async () => {
+cron.schedule("55 23 */1 * *", async () => {
   console.log(`🔄 Running stream URL renewal at ${new Date().toLocaleString()}`);
   try {
     await renewStreamUrls();
@@ -89,6 +91,8 @@ app.use("/api", cameraRoutes);
 app.use("/api", detailedScheduleRoutes);
 app.use("/api", hikvisionRoutes);
 app.use("/api", userRoutes);
+app.use("/api", pluginRoutes);
+app.use("/api/gridwall", gridwall);
  
 // ------------------------
 // MediaMTX Launch

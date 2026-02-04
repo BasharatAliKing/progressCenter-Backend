@@ -48,6 +48,45 @@ export const xerUpload = multer({
   }
 });
 
+// Configure multer for Plugin image uploads
+const pluginStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "../../public/images/plugins");
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'plugin-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// File filter to accept only images
+const imageFilter = (req, file, cb) => {
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  
+  if (allowedExtensions.includes(fileExtension) || 
+      file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+// Multer configuration for plugins
+export const pluginUpload = multer({
+  storage: pluginStorage,
+  fileFilter: imageFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
+
 // Error handling middleware for multer
 export const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -63,6 +102,13 @@ export const handleUploadError = (error, req, res, next) => {
     return res.status(400).json({
       success: false,
       message: 'Invalid file type. Only XER files are allowed.'
+    });
+  }
+  
+  if (error.message === 'Only image files are allowed!') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid file type. Only image files are allowed.'
     });
   }
   
