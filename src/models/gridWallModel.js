@@ -40,16 +40,7 @@ const GridWallSchema = new mongoose.Schema({
             const requiredSlots = getRequiredSlots(this.layout);
             return requiredSlots ? new Array(requiredSlots).fill(null) : [];
         },
-        validate:{
-            validator:function(value){
-                const requiredSlots = getRequiredSlots(this.layout);
-                if (!requiredSlots) {
-                    return false;
-                }
-                return Array.isArray(value) && value.length === requiredSlots;
-            },
-            message:props => `cameraIds must have exactly ${getRequiredSlots(props.instance?.layout)} values for layout ${props.instance?.layout}`,
-        },
+        // Validation handled in controller to avoid context issues during updates
     },
     createdBy:{
         type:String,
