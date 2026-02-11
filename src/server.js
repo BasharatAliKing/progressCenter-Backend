@@ -13,7 +13,7 @@ import hikvisionRoutes from "./routes/hikvisionRoutes.js";
 import userRoutes from "./routes/userRouter.js";
 import pluginRoutes from "./routes/pluginRoutes.js";
 const PORT = process.env.PORT || 4000;
-import cron from "node-cron";
+import cron from "node-cron"; 
 import { captureSnapshot } from "./controllers/snapshotController.js";
 import snapshotRoutes from "./routes/snapshotRoutes.js";
 import { renewStreamUrls } from "./jobs/streamRenew.job.js";

@@ -1,6 +1,16 @@
 import express from "express";
 import mongoose from "mongoose";
 
+const getRequiredSlots = (layout) => {
+    const layoutToSlots = {
+        "1": 2,
+        "2": 4,
+        "3": 9,
+        "4": 16,
+    };
+    return layoutToSlots[layout];
+};
+
 // Schema Here
 const GridWallSchema = new mongoose.Schema({
     name:{
@@ -23,6 +33,23 @@ const GridWallSchema = new mongoose.Schema({
     showCameraName:{
         type:Boolean,
         default:false,
+    },
+    cameraIds:{
+        type:[String],
+        default:function(){
+            const requiredSlots = getRequiredSlots(this.layout);
+            return requiredSlots ? new Array(requiredSlots).fill(null) : [];
+        },
+        validate:{
+            validator:function(value){
+                const requiredSlots = getRequiredSlots(this.layout);
+                if (!requiredSlots) {
+                    return false;
+                }
+                return Array.isArray(value) && value.length === requiredSlots;
+            },
+            message:props => `cameraIds must have exactly ${getRequiredSlots(props.instance?.layout)} values for layout ${props.instance?.layout}`,
+        },
     },
     createdBy:{
         type:String,

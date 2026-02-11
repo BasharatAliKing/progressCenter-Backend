@@ -1,6 +1,39 @@
 import express from "express";
 import GridWall from "../models/gridWallModel.js";
 
+const getRequiredSlots = (layout) => {
+  const layoutToSlots = {
+    "1": 2,
+    "2": 4,
+    "3": 9,
+    "4": 16,
+  };
+  return layoutToSlots[layout];
+};
+
+const normalizeCameraIds = (layout, cameraIds) => {
+  const requiredSlots = getRequiredSlots(layout);
+  if (!requiredSlots) {
+    return { error: "Invalid layout value" };
+  }
+
+  if (cameraIds === undefined) {
+    return { cameraIds: new Array(requiredSlots).fill(null) };
+  }
+
+  if (!Array.isArray(cameraIds)) {
+    return { error: "cameraIds must be an array" };
+  }
+
+  if (cameraIds.length !== requiredSlots) {
+    return {
+      error: `cameraIds must have exactly ${requiredSlots} values for layout ${layout}`,
+    };
+  }
+
+  return { cameraIds };
+};
+
 // Create a new grid wall configuration
 export const createGridWall = async (req, res) => {
   try {
@@ -10,15 +43,25 @@ export const createGridWall = async (req, res) => {
       showDateTime,
       showProjectName,
       showCameraName,
+      cameraIds,
       createdBy,
       creatorId,
     } = req.body;
+
+    const cameraIdsResult = normalizeCameraIds(layout, cameraIds);
+    if (cameraIdsResult.error) {
+      return res
+        .status(400)
+        .json({ success: false, message: cameraIdsResult.error });
+    }
+
     const newGridWall = new GridWall({
       name,
       layout,
       showDateTime,
       showProjectName,
       showCameraName,
+      cameraIds: cameraIdsResult.cameraIds,
       createdBy,
       creatorId,
     });
@@ -57,8 +100,47 @@ export const updateGridWall = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const existingGridWall = await GridWall.findById(id);
+    if (!existingGridWall) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Grid wall not found" });
+    }
+
+    const nextLayout = updates.layout ?? existingGridWall.layout;
+    const requiredSlots = getRequiredSlots(nextLayout);
+    if (!requiredSlots) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid layout value" });
+    }
+
+    if (updates.cameraIds !== undefined) {
+      const cameraIdsResult = normalizeCameraIds(nextLayout, updates.cameraIds);
+      if (cameraIdsResult.error) {
+        return res
+          .status(400)
+          .json({ success: false, message: cameraIdsResult.error });
+      }
+      updates.cameraIds = cameraIdsResult.cameraIds;
+    } else if (updates.layout !== undefined) {
+      const currentCameraIds = Array.isArray(existingGridWall.cameraIds)
+        ? existingGridWall.cameraIds
+        : [];
+      if (currentCameraIds.length === requiredSlots) {
+        updates.cameraIds = currentCameraIds;
+      } else if (currentCameraIds.length > requiredSlots) {
+        updates.cameraIds = currentCameraIds.slice(0, requiredSlots);
+      } else {
+        updates.cameraIds = currentCameraIds.concat(
+          new Array(requiredSlots - currentCameraIds.length).fill(null)
+        );
+      }
+    }
+
     const updatedGridWall = await GridWall.findByIdAndUpdate(id, updates, {
       new: true,
+      runValidators: true,
     });
     if (!updatedGridWall) {
       return res
