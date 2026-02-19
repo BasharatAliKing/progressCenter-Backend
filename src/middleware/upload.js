@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
-    cb(null, uploadPath);
+    cb(null, uploadPath);8
   },
   filename: (req, file, cb) => {
     // Generate unique filename
@@ -87,6 +87,71 @@ export const pluginUpload = multer({
   }
 });
 
+// Configure multer for side-by-side video uploads
+const sideBySideVideoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "../../public/videos/side-by-side");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    // Generate filename in same format as snapshots: YYYYMMDDHHMM + sequential number
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    
+    const dateStr = `${year}${month}${day}`;
+    const timeStr = `${hours}${minutes}`;
+    
+    // Get start and end of today to count videos
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    // Use timestamp-based unique identifier instead of relying on database count
+    // Format: YYYYMMDDHHMM + milliseconds (ensures uniqueness)
+    const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    
+    const filename = `${dateStr}${timeStr}${seconds}${milliseconds}${path.extname(file.originalname)}`;
+    cb(null, filename);
+  }
+});
+
+const videoFilter = (req, file, cb) => {
+  const allowedExtensions = ['.mp4', '.mov', '.webm', '.mkv', '.avi'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+
+  if (allowedExtensions.includes(fileExtension) || file.mimetype.startsWith('video/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only video files are allowed!'), false);
+  }
+};
+
+export const sideBySideVideoUpload = multer({
+  storage: sideBySideVideoStorage,
+  fileFilter: videoFilter,
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB limit
+  }
+});
+
+// Alternative flexible upload that accepts any field name but validates it's a video
+export const sideBySideVideoUploadFlexible = multer({
+  storage: sideBySideVideoStorage,
+  fileFilter: videoFilter,
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB limit
+  }
+}).any();
+
 // Error handling middleware for multer
 export const handleUploadError = (error, req, res, next) => {
   if (error instanceof multer.MulterError) {
@@ -112,5 +177,32 @@ export const handleUploadError = (error, req, res, next) => {
     });
   }
   
+  next(error);
+};
+
+export const handleVideoUploadError = (error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 500MB.'
+      });
+    }
+    
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Unexpected field name. Please send the video file with field name "video".'
+      });
+    }
+  }
+
+  if (error.message === 'Only video files are allowed!') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid file type. Only video files are allowed.'
+    });
+  }
+
   next(error);
 };

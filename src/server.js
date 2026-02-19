@@ -12,6 +12,7 @@ import detailedScheduleRoutes from "./routes/detailedScheduleRoutes.js";
 import hikvisionRoutes from "./routes/hikvisionRoutes.js";
 import userRoutes from "./routes/userRouter.js";
 import pluginRoutes from "./routes/pluginRoutes.js";
+import sideBySideVideoRoutes from "./routes/sideBySideVideoRoutes.js";
 const PORT = process.env.PORT || 4000;
 import cron from "node-cron"; 
 import { captureSnapshot } from "./controllers/snapshotController.js";
@@ -95,6 +96,8 @@ app.use("/api", userRoutes);
 app.use("/api", pluginRoutes);
 app.use("/api/gridwall", gridwall);
 app.use("/api", aqiRoutes);
+app.use("/api", sideBySideVideoRoutes);
+
 // ------------------------
 // MediaMTX Launch
 // ------------------------
