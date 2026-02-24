@@ -5,6 +5,7 @@ import {
 	getSideBySideVideoById,
 	updateSideBySideVideo,
 	deleteSideBySideVideo,
+	getSideBySideVideosByDate,
 } from "../controllers/sideBySideVideoController.js";
 import { sideBySideVideoUploadFlexible, handleVideoUploadError } from "../middleware/upload.js";
 
@@ -24,6 +25,7 @@ router.put("/side-by-side-videos/:id", sideBySideVideoUploadFlexible, handleVide
 
 // Delete a side-by-side video by ID
 router.delete("/side-by-side-videos/:id", deleteSideBySideVideo);
-
+// Get side-by-side videos by date
+router.get("/by-date", getSideBySideVideosByDate);
 export default router;
 
