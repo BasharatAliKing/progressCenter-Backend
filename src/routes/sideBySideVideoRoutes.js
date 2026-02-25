@@ -26,6 +26,6 @@ router.put("/side-by-side-videos/:id", sideBySideVideoUploadFlexible, handleVide
 // Delete a side-by-side video by ID
 router.delete("/side-by-side-videos/:id", deleteSideBySideVideo);
 // Get side-by-side videos by date
-router.get("/by-date", getSideBySideVideosByDate);
+router.get("/side-by-side-videos/by-date/:date", getSideBySideVideosByDate);
 export default router;
 

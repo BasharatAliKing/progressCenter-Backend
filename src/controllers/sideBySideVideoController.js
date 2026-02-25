@@ -91,7 +91,7 @@ export const getSideBySideVideoById = async (req, res) => {
       });
     }
 
-    res.status(200).json(video);
+    res.status(200).json({messaage:"Side-by-side video fetched", video});
   } catch (error) {
     console.error("Error fetching side-by-side video:", error);
     res.status(500).json({ message: "Internal server error" });
