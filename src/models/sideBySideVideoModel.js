@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 //  Schema here
 const sideBySideVideoSchema = new mongoose.Schema({
     project_name: { type: String, required: true },
-    video_date: { type: Date, required: true },
+    video_date: { type: String, required: true },
     videoUrl: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
 });
