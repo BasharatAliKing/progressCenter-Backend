@@ -187,28 +187,14 @@ export const deleteSideBySideVideo = async (req, res) => {
 export const getSideBySideVideosByDate = async (req, res) => {
   try {
     const { date } = req.params;
-
+    console.log(date);
     if (!date) {
       return res.status(400).json({
         message: "Date query parameter is required",
       });
     }
-
-    // Convert string to date range (full day)
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const videos = await sideBySideVideo.find({
-      video_date: {
-        $gte: startOfDay,
-        $lte: endOfDay,
-      },
-    }).sort({ createdAt: -1 });
-
-    res.status(200).json(videos);
+    const videos = await sideBySideVideo.find({ video_date: date }).sort({ createdAt: -1 });
+    res.status(200).json({ message: "Side-by-side videos fetched", videos });
   } catch (error) {
     console.error("Error fetching videos by date:", error);
     res.status(500).json({ message: "Internal server error" });
