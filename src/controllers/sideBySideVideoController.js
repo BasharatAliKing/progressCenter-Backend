@@ -69,7 +69,7 @@ export const getAllSideBySideVideos = async (req, res) => {
       .find()
       .sort({ createdAt: -1 });
 
-    res.status(200).json(videos);
+    res.status(200).json({ message: "Side-by-side videos fetched", videos });
   } catch (error) {
     console.error("Error fetching side-by-side videos:", error);
     res.status(500).json({ message: "Internal server error" });
