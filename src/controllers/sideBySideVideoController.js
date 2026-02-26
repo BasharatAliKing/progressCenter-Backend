@@ -187,7 +187,6 @@ export const deleteSideBySideVideo = async (req, res) => {
 export const getSideBySideVideosByDate = async (req, res) => {
   try {
     const { date } = req.params;
-    console.log(date);
     if (!date) {
       return res.status(400).json({
         message: "Date query parameter is required",
