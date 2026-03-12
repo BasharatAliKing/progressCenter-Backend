@@ -21,6 +21,7 @@ import { renewStreamUrls } from "./jobs/streamRenew.job.js";
 import { cleanupOldVideos } from "./jobs/cleanupVideos.job.js";
 import gridwall from "./routes/gridWallRoutes.js";
 import aqiRoutes from "./routes/aqiRoutes.js";
+import dailyProgress from "./routes/dailyProgressReportRoutes.js";
 import morgan from "morgan";  
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -98,6 +99,7 @@ app.use("/api", pluginRoutes);
 app.use("/api/gridwall", gridwall);
 app.use("/api", aqiRoutes);
 app.use("/api", sideBySideVideoRoutes);
+app.use("/api/dailyprogress", dailyProgress);
 
 // ------------------------
 // MediaMTX Launch

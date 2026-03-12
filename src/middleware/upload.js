@@ -206,3 +206,34 @@ export const handleVideoUploadError = (error, req, res, next) => {
 
   next(error);
 };
+
+
+// Configure multer for Progress Photos
+const progressPhotoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "../../uploads/progressPhotos");
+
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix =
+      Date.now() + "-" + Math.round(Math.random() * 1e9);
+
+    cb(
+      null,
+      "progress-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  }
+});
+
+export const progressPhotoUpload = multer({
+  storage: progressPhotoStorage,
+  fileFilter: imageFilter, // you already created this
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  }
+});
